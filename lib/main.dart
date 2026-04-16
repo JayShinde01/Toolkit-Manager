@@ -1,36 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:toolkit_manager/features/auth/presentation/pages/register_page.dart';
-import 'package:toolkit_manager/features/auth/presentation/pages/login_page.dart';
-// import 'package:toolkit_manager/features/home/admin_home.dart;
+import 'core/storage_service.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/student/student_home.dart';
+import 'screens/admin/admin_home.dart';
+import 'screens/lab/lab_home.dart';
 
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load();
-
+void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  Future<Widget> _getStartScreen() async {
+    String? role = await StorageService.getRole();
+
+    if (role == "STUDENT") return StudentHome();
+    if (role == "ADMIN") return AdminHome();
+    if (role == "LAB_ASSISTANT") return LabHome();
+
+    return LoginScreen();
+  }
+
   @override
   Widget build(BuildContext context) {
-   return MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-
-      // 🔥 IMPORTANT
-      initialRoute: "/register",
-
-      routes: {
-        "/register": (context) => const RegisterPage(),
-        "/login": (context) => const LoginPage(), // ✅ FIX HERE
-          // "/studentHome": (context) => const StudentHome(),
-          // "/adminHome": (context) => const AdminHome(),
-          // "/labHome": (context) => const LabHome(),
-
-      },
+      home: FutureBuilder(
+        future: _getStartScreen(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          return snapshot.data!;
+        },
+      ),
     );
   }
 }
